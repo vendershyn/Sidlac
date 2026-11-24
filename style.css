@@ -1511,6 +1511,14 @@ html[data-skin="wmp"] {
   }
 }
 @media (max-width: 640px) and (orientation: portrait) {
+  .lcd {
+    container-type: size;
+  }
+  [data-theme="dark"] .lcd {
+    width: auto;
+    height: min(145px, max(80px, calc(100svh - 520px)));
+    aspect-ratio: 4/3;
+  }
   .cam-stage {
     display: grid;
     position: relative;
@@ -1555,6 +1563,17 @@ html[data-skin="wmp"] {
     width: auto;
     height: min(145px, calc(100svh - 520px));
     max-width: 100%;
+  }
+  [data-theme] .lcd canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100cqh;
+    height: 100cqw;
+    max-width: none;
+    aspect-ratio: auto;
+    object-fit: fill;
+    transform: translate(-50%, -50%) rotate(-90deg);
   }
   [data-theme="dark"] .ctrl {
     flex-direction: column !important;

@@ -13,7 +13,8 @@ vid.playsInline = true;
 vid.muted = true;
 const live = $("#live"),
   SZ = { light: [256, 192], dark: [480, 360] },
-  SZL = { sony: [256, 192], canon: [320, 240], wmp: [160, 120] };
+  SZL = { sony: [256, 192], canon: [320, 240], wmp: [160, 120] },
+  portrait = matchMedia("(max-width: 640px) and (orientation: portrait)");
 const TT = {
   light: "Sidlac — Y2K Cam.exe",
   dark: "Sidlac · Est. 1926",
@@ -32,26 +33,42 @@ const dstr = () => {
 };
 
 function render(cv) {
-  const L = theme === "light",
+  const portraitMode = portrait.matches,
+    L = theme === "light",
     sk = document.documentElement.dataset.skin,
-    [w, h] = L ? SZL[sk] : SZ.dark;
-  if (cv.width !== w) {
+    [baseW, baseH] = L ? SZL[sk] : SZ.dark,
+    [w, h] = portraitMode ? [baseH, baseW] : [baseW, baseH];
+  if (cv.width !== w || cv.height !== h) {
     cv.width = w;
     cv.height = h;
   }
   const c = cv.getContext("2d", { willReadFrequently: true }),
     vw = vid.videoWidth,
     vh = vid.videoHeight;
-  let sw = vw,
-    sh = (vw * 3) / 4;
-  if (sh > vh) {
-    sh = vh;
-    sw = (vh * 4) / 3;
+  const rotate = portraitMode && vw > vh,
+    sourceWidth = rotate ? vh : vw,
+    sourceHeight = rotate ? vw : vh;
+  let cropWidth = sourceWidth,
+    cropHeight = sourceHeight;
+  if (cropWidth / cropHeight > w / h) {
+    cropWidth = cropHeight * (w / h);
+  } else {
+    cropHeight = cropWidth / (w / h);
   }
+  const sourceCropWidth = rotate ? cropHeight : cropWidth,
+    sourceCropHeight = rotate ? cropWidth : cropHeight,
+    sx = (vw - sourceCropWidth) / 2,
+    sy = (vh - sourceCropHeight) / 2;
   c.save();
   c.translate(w, 0);
   c.scale(-1, 1);
-  c.drawImage(vid, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+  if (rotate) {
+    c.translate(w, 0);
+    c.rotate(Math.PI / 2);
+    c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, h, w);
+  } else {
+    c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, w, h);
+  }
   c.restore();
   const im = c.getImageData(0, 0, w, h),
     d = im.data;
@@ -221,8 +238,10 @@ async function compose() {
   } catch (e) {}
   const L = theme === "light",
     G = layout === "grid",
-    pw = G ? 400 : 480,
-    ph = G ? 300 : 360,
+    portraitMode = portrait.matches,
+    [frameW, frameH] = G ? [400, 300] : [480, 360],
+    pw = portraitMode ? frameH : frameW,
+    ph = portraitMode ? frameW : frameH,
     cols = G ? 2 : 1,
     rows = G ? 2 : 3,
     g = 22,
