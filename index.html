@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-skin="sony">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Sidlac</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&family=Special+Elite&family=Oswald:wght@400;600&family=Playfair+Display:ital,wght@1,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="win">
+      <div class="tb">
+        <i class="fa-solid fa-camera"></i><span class="t" id="ttl"></span
+        ><span class="w"
+          ><span class="wb"><i class="fa-solid fa-minus"></i></span
+          ><span class="wb"><i class="fa-regular fa-square"></i></span
+          ><span class="wb"><i class="fa-solid fa-xmark"></i></span
+        ></span>
+      </div>
+      <div class="marq"></div>
+      <section id="camView">
+        <div class="err" id="err" hidden>
+          <i class="fa-solid fa-triangle-exclamation"></i
+          ><span
+            >Camera unavailable. Please allow camera access and try again.</span
+          ><button class="btn" id="retry">
+            <i class="fa-solid fa-rotate-left"></i> Retry
+          </button>
+        </div>
+        <div class="cam-stage">
+          <div class="cam">
+            <div class="lens"></div>
+            <div class="flashw"></div>
+            <div class="brand lo">Sidlac · 2.0 Mega Pixels · Optical Zoom</div>
+            <div class="scr">
+              <div class="hud top">
+                <span>MDR<b></b></span><span>EVP<b></b></span><span>LOOK</span>
+              </div>
+              <div class="hs hl">
+                <span>SYS</span><span>FPS 48.000</span><span>SHUTTER 180.0</span
+                ><span><b></b>800</span><span>WB 5600</span><span>CC+0</span>
+              </div>
+              <div class="lcd">
+                <canvas id="live" width="256" height="192"></canvas>
+                <div class="osd l">
+                  <span><i class="fa-solid fa-battery-full"></i> 2M</span
+                  ><span id="sc">★ AUTO</span>
+                </div>
+                <div class="osd d">
+                  <span></span><span id="sd">ISO 800</span>
+                </div>
+                <div class="fr"></div>
+                <div class="cd" id="cd"></div>
+                <div class="flash" id="flash"></div>
+              </div>
+              <div class="hs hr">
+                <span>BAT 13.7V</span><span class="rec2"><u></u>REC</span
+                ><span>CLIP A023 C007</span><span>5×5</span><span>18MIN</span>
+              </div>
+            </div>
+            <div class="ctrl">
+              <div class="zoom lo">W&nbsp;T</div>
+              <button class="shut" id="shut" aria-label="Take photos" disabled>
+                <i class="fa-solid fa-camera"></i>
+              </button>
+              <div class="lbl" id="lbl">SNAP</div>
+              <div class="mini lo">
+                <span><i class="fa-solid fa-bars"></i></span
+                ><span><i class="fa-solid fa-trash-can"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="thumbs" id="th"></div>
+        <div class="bar">
+          <div class="grp">
+            <button
+              class="sw"
+              id="tg"
+              aria-label="Switch between Y2K and vintage mode"
+            >
+              <i class="fa-solid fa-star"></i
+              ><i class="fa-solid fa-moon"></i></button
+            ><button class="btn" id="snd" aria-label="Toggle sound">
+              <i class="fa-solid fa-volume-high"></i
+              ><i class="fa-solid fa-volume-xmark"></i>
+            </button>
+          </div>
+          <div class="seg">
+            <button data-l="strip" class="on">
+              <i class="fa-solid fa-film"></i> 3-pic strip</button
+            ><button data-l="grid">
+              <i class="fa-solid fa-table-cells-large"></i> 2×2 grid
+            </button>
+          </div>
+          <div class="seg skins">
+            <button data-s="sony" class="on">
+              <i class="fa-solid fa-camera"></i> Slim cam</button
+            ><button data-s="canon">
+              <i class="fa-solid fa-camera-retro"></i> Classic cam</button
+            ><button data-s="wmp">
+              <i class="fa-solid fa-circle-play"></i> Player
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="res" id="res" hidden>
+        <div class="slot">Sidlac Photo Booth</div>
+        <div class="wmp">
+          <div class="eject"><canvas id="out"></canvas></div>
+          <div class="wmpbar">
+            <i class="fa-solid fa-play"></i><i class="fa-solid fa-stop"></i
+            ><span class="pg"></span><i class="fa-solid fa-volume-high"></i>
+          </div>
+        </div>
+        <div class="seg palette" role="group" aria-label="Photocard color">
+          <span class="palette-label" aria-hidden="true">Card color</span>
+          <button
+            class="color-option on"
+            data-color="pink"
+            aria-label="Pastel pink"
+            aria-pressed="true"
+            title="Pastel pink"
+          ></button>
+          <button
+            class="color-option"
+            data-color="lavender"
+            aria-label="Pastel lavender"
+            aria-pressed="false"
+            title="Pastel lavender"
+          ></button>
+          <button
+            class="color-option"
+            data-color="mint"
+            aria-label="Pastel mint"
+            aria-pressed="false"
+            title="Pastel mint"
+          ></button>
+          <button
+            class="color-option"
+            data-color="sky"
+            aria-label="Pastel sky blue"
+            aria-pressed="false"
+            title="Pastel sky blue"
+          ></button>
+          <button
+            class="color-option"
+            data-color="butter"
+            aria-label="Pastel butter yellow"
+            aria-pressed="false"
+            title="Pastel butter yellow"
+          ></button>
+        </div>
+        <div class="acts">
+          <button class="btn p" id="dl">
+            <i class="fa-solid fa-download"></i> Download PNG</button
+          ><button class="btn" id="again">
+            <i class="fa-solid fa-rotate-left"></i> New session
+          </button>
+        </div>
+        <div class="note">
+          One-time use: nothing is uploaded or stored. Download now; refreshing
+          wipes everything.
+        </div>
+      </section>
+      <div class="stat">
+        <span
+          ><i class="fa-solid fa-circle-info"></i> <span id="hint"></span></span
+        ><span id="clk"></span>
+      </div>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
