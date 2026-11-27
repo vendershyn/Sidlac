@@ -1652,6 +1652,12 @@ html[data-skin="canon"] {
 .palette .color-option[data-color="butter"]::before {
   background: #fbf0c8;
 }
+.palette .color-option[data-color="black"]::before {
+  background: #111;
+}
+.palette .color-option[data-color="brown"]::before {
+  background: #8b5e3c;
+}
 .palette .color-option.on {
   border-color: #16306b;
 }
@@ -1665,5 +1671,10 @@ html[data-skin="canon"] {
     height: 36px;
     min-height: 36px;
     padding: 3px;
+  }
+}
+@media (max-width: 640px) and (orientation: portrait), (max-height: 640px) and (pointer: coarse) and (orientation: portrait) {
+  .cd {
+    transform: rotate(-90deg);
   }
 }

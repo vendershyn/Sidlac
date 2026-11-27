@@ -28,6 +28,8 @@ const CARD_COLORS = {
   mint: "#daf0df",
   sky: "#d8ecf7",
   butter: "#fbf0c8",
+  black: "#111111",
+  brown: "#8b5e3c",
 };
 const q = (v) => Math.round(Math.max(0, Math.min(255, v)) / 17) * 17;
 const dstr = () => {
@@ -185,38 +187,7 @@ function render(cv) {
     }
   }
   c.putImageData(im, 0, 0);
-  if (L) {
-    const t = new Date(),
-      s =
-        p2(t.getMonth() + 1) +
-        " " +
-        p2(t.getDate()) +
-        " ’" +
-        String(t.getFullYear()).slice(2);
-    c.textAlign = "right";
-    if (sk === "sony") {
-      c.font = "16px VT323,monospace";
-      c.fillStyle = "#000";
-      c.fillText(s, w - 7, h - 7);
-      c.fillStyle = "#ff8a1f";
-      c.fillText(s, w - 8, h - 8);
-    } else if (sk === "canon") {
-      c.font = "22px VT323,monospace";
-      c.fillStyle = "#ffd23f";
-      c.fillText(
-        t.getFullYear() + " " + p2(t.getMonth() + 1) + " " + p2(t.getDate()),
-        w - 10,
-        h - 10,
-      );
-    } else {
-      c.font = "11px Tahoma,sans-serif";
-      c.fillStyle = "#fff";
-      c.fillText(p2(t.getHours()) + ":" + p2(t.getMinutes()), w - 6, h - 6);
-      c.textAlign = "left";
-      c.fillStyle = "#e5322d";
-      c.fillText("● LIVE", 6, h - 6);
-    }
-  } else {
+  if (!L) {
     const g = c.createRadialGradient(
       w / 2,
       h / 2,
@@ -331,89 +302,44 @@ async function compose() {
       document.fonts.load('18px "Special Elite"'),
     ]);
   } catch (e) {}
-  const L = theme === "light",
-    G = layout === "grid",
+  const G = layout === "grid",
     portraitMode = portrait.matches,
     [frameW, frameH] = G ? [400, 300] : [480, 360],
     pw = portraitMode ? frameH : frameW,
     ph = portraitMode ? frameW : frameH,
     cols = G ? 2 : 1,
     rows = G ? 2 : 3,
-    g = 22,
-    px = L ? 40 : 70,
-    py = L ? 40 : 50,
-    fh = L ? 110 : 120;
-  const W = px * 2 + cols * pw + (cols - 1) * g,
-    fy = py + rows * ph + (rows - 1) * g,
-    H = fy + fh,
+    padding = 24,
+    gap = 12,
+    brandHeight = 54;
+  const W = padding * 2 + cols * pw + (cols - 1) * gap,
+    H = padding * 2 + rows * ph + (rows - 1) * gap + brandHeight,
     o = $("#out"),
     c = o.getContext("2d");
   o.width = W;
   o.height = H;
-  c.textAlign = "center";
-  c.textBaseline = "alphabetic";
   const pos = (i) => [
-    px + (i % cols) * (pw + g),
-    py + Math.floor(i / cols) * (ph + g),
+    padding + (i % cols) * (pw + gap),
+    padding + Math.floor(i / cols) * (ph + gap),
   ];
-  if (L) {
-    c.fillStyle = CARD_COLORS[cardColor];
-    c.fillRect(0, 0, W, H);
-    const cl = ["#ff6ec7", "#7aa8ff", "#ffe14d", "#ffffff"];
-    for (let i = 0; i < 46; i++) {
-      c.fillStyle = cl[i % 4];
-      c.font = 12 + ((i * 7) % 22) + "px sans-serif";
-      c.fillText(i % 3 ? "★" : "✦", (i * 137) % W, (i * 263) % H);
-    }
-    shots.forEach((s, i) => {
-      const [x, y] = pos(i);
-      c.shadowColor = "rgba(80,60,160,.4)";
-      c.shadowBlur = 12;
-      c.fillStyle = "#fff";
-      c.fillRect(x - 6, y - 6, pw + 12, ph + 12);
-      c.shadowBlur = 0;
-      c.imageSmoothingEnabled =
-        document.documentElement.dataset.skin !== "sony";
-      c.drawImage(s, x, y, pw, ph);
-    });
-    c.font = "46px VT323,monospace";
-    c.fillStyle = "#3b4fd8";
-    c.fillText("✦ Y2K BOOTH ✦", W / 2, fy + 52);
-    c.font = "28px VT323,monospace";
-    c.fillStyle = "#d63fa4";
-    c.fillText(dstr(), W / 2, fy + 88);
-  } else {
-    c.fillStyle = CARD_COLORS[cardColor];
-    c.fillRect(0, 0, W, H);
-    c.fillStyle = "#746f68";
-    for (let y = 14; y < H - 10; y += 46) {
-      c.fillRect(20, y, 26, 30);
-      c.fillRect(W - 46, y, 26, 30);
-    }
-    shots.forEach((s, i) => {
-      const [x, y] = pos(i);
-      c.drawImage(s, x, y, pw, ph);
-      c.font = '15px "Special Elite",monospace';
-      c.textAlign = "right";
-      c.fillStyle = "#746f68";
-      c.fillText("▸ " + (21 + i), x + pw, y - 7);
-    });
-    c.save();
-    c.translate(58, H / 2);
-    c.rotate(Math.PI / 2);
-    c.textAlign = "center";
-    c.font = '13px "Special Elite",monospace';
-    c.fillStyle = "#746f68";
-    c.fillText("WY-1999-1126", 0, 0);
-    c.restore();
-    c.textAlign = "center";
-    c.font = 'italic 700 44px "Playfair Display",Georgia,serif';
-    c.fillStyle = "#292521";
-    c.fillText("Sidlac", W / 2, fy + 56);
-    c.font = '17px "Special Elite",monospace';
-    c.fillStyle = "#625c54";
-    c.fillText("WY-1999-1126 · " + dstr(), W / 2, fy + 92);
+  c.fillStyle = CARD_COLORS[cardColor];
+  c.fillRect(0, 0, W, H);
+  if (theme === "light") {
+    c.imageSmoothingEnabled =
+      document.documentElement.dataset.skin !== "sony";
   }
+  shots.forEach((s, i) => {
+    const [x, y] = pos(i);
+    c.drawImage(s, x, y, pw, ph);
+  });
+  c.font = "bold 18px sans-serif";
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.fillStyle =
+    cardColor === "black" || cardColor === "brown" ? "#fff" : "#222";
+  c.fillText("Sidlac", W / 2, H - 35);
+  c.font = "12px sans-serif";
+  c.fillText(dstr(), W / 2, H - 13);
   $("#camView").hidden = true;
   $("#res").hidden = false;
   o.classList.remove("go");
