@@ -8,13 +8,16 @@ let theme = "light",
   ready = false,
   shots = [],
   tick = 0;
+const timer = $("#cd");
 const vid = document.createElement("video");
 vid.playsInline = true;
 vid.muted = true;
+let cameraStream = null;
 const live = $("#live"),
   SZ = { light: [256, 192], dark: [480, 360] },
-  SZL = { sony: [256, 192], canon: [320, 240], wmp: [160, 120] },
-  portrait = matchMedia("(max-width: 640px) and (orientation: portrait)");
+  SZL = { sony: [256, 192], canon: [320, 240] },
+  mobile = matchMedia("(max-width: 640px), (max-height: 640px) and (pointer: coarse)"),
+  portrait = mobile;
 const TT = {
   light: "Sidlac — Y2K Cam.exe",
   dark: "Sidlac · Est. 1926",
@@ -32,6 +35,82 @@ const dstr = () => {
   return p2(t.getMonth() + 1) + "." + p2(t.getDate()) + "." + t.getFullYear();
 };
 
+let sensorActive = false,
+  sensorPermissionRequested = false;
+function setTimerRotation(degrees) {
+  timer.style.setProperty("--timer-rotation", degrees + "deg");
+}
+function updateTimerFromScreen() {
+  if (!mobile.matches) {
+    setTimerRotation(0);
+    return;
+  }
+  if (sensorActive) return;
+  const angle =
+    screen.orientation && typeof screen.orientation.angle === "number"
+      ? screen.orientation.angle
+      : typeof window.orientation === "number"
+        ? window.orientation
+        : 0;
+  setTimerRotation(
+    angle === 90 || angle === -270
+      ? 90
+      : angle === 270 || angle === -90
+        ? -90
+        : 0,
+  );
+}
+function handleDeviceOrientation(event) {
+  if (!mobile.matches) {
+    setTimerRotation(0);
+    return;
+  }
+  const beta = event.beta,
+    gamma = event.gamma;
+  if (typeof beta !== "number" || typeof gamma !== "number") return;
+  if (Math.max(Math.abs(beta), Math.abs(gamma)) < 20) return;
+  sensorActive = true;
+  setTimerRotation(
+    Math.abs(gamma) > Math.abs(beta) && Math.abs(gamma) > 35
+      ? gamma > 0
+        ? 90
+        : -90
+      : 0,
+  );
+}
+function enableDeviceOrientation() {
+  if (
+    sensorPermissionRequested ||
+    !mobile.matches ||
+    !("DeviceOrientationEvent" in window)
+  )
+    return;
+  sensorPermissionRequested = true;
+  const requestPermission = DeviceOrientationEvent.requestPermission;
+  if (typeof requestPermission === "function") {
+    requestPermission
+      .call(DeviceOrientationEvent)
+      .then((permission) => {
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleDeviceOrientation);
+        } else {
+          updateTimerFromScreen();
+        }
+      })
+      .catch(updateTimerFromScreen);
+  } else {
+    window.addEventListener("deviceorientation", handleDeviceOrientation);
+  }
+}
+timer.style.setProperty("--timer-rotation", "0deg");
+if ("DeviceOrientationEvent" in window && !DeviceOrientationEvent.requestPermission) {
+  window.addEventListener("deviceorientation", handleDeviceOrientation);
+}
+updateTimerFromScreen();
+screen.orientation?.addEventListener?.("change", updateTimerFromScreen);
+window.addEventListener("orientationchange", updateTimerFromScreen);
+window.addEventListener("pointerdown", enableDeviceOrientation, { once: true });
+
 function render(cv) {
   const portraitMode = portrait.matches,
     L = theme === "light",
@@ -45,7 +124,7 @@ function render(cv) {
   const c = cv.getContext("2d", { willReadFrequently: true }),
     vw = vid.videoWidth,
     vh = vid.videoHeight;
-  const rotate = portraitMode && vw > vh,
+  const rotate = portraitMode ? vw > vh : !mobile.matches && vh > vw,
     sourceWidth = rotate ? vh : vw,
     sourceHeight = rotate ? vw : vh;
   let cropWidth = sourceWidth,
@@ -63,8 +142,13 @@ function render(cv) {
   c.translate(w, 0);
   c.scale(-1, 1);
   if (rotate) {
-    c.translate(w, 0);
-    c.rotate(Math.PI / 2);
+    if (portraitMode) {
+      c.translate(w, 0);
+      c.rotate(Math.PI / 2);
+    } else {
+      c.translate(0, h);
+      c.rotate(-Math.PI / 2);
+    }
     c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, h, w);
   } else {
     c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, w, h);
@@ -84,10 +168,6 @@ function render(cv) {
         d[i] = (l + (r - l) * 1.25 - 128) * 1.3 + 156 + n / 3;
         d[i + 1] = (l + (g - l) * 1.25 - 128) * 1.3 + 150 + n / 3;
         d[i + 2] = (l + (b - l) * 1.25 - 128) * 1.3 + 160 + n / 3;
-      } else if (sk === "wmp") {
-        d[i] = (l + (r - l) * 0.55 - 128) * 0.85 + 128 + n * 0.8;
-        d[i + 1] = (l + (g - l) * 0.55 - 128) * 0.85 + 144 + n * 0.8;
-        d[i + 2] = (l + (b - l) * 0.55 - 128) * 0.85 + 140 + n * 0.8;
       } else {
         d[i] = q((l + (r - l) * 1.5 - 128) * 1.15 + 140 + n);
         d[i + 1] = q((l + (g - l) * 1.5 - 128) * 1.15 + 136 + n);
@@ -163,6 +243,9 @@ function loop(ts) {
 }
 async function init() {
   try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Camera API unavailable");
+    }
     const s = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
@@ -171,13 +254,24 @@ async function init() {
       },
       audio: false,
     });
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    cameraStream = s;
     vid.srcObject = s;
     await vid.play();
     ready = true;
     $("#err").hidden = true;
     $("#shut").disabled = false;
+    $("#hint").textContent = HINT;
   } catch (e) {
+    ready = false;
+    $("#shut").disabled = true;
     $("#err").hidden = false;
+    $("#hint").textContent =
+      e && e.name === "NotAllowedError"
+        ? "Camera access was denied. Allow it, then choose Retry."
+        : "Camera unavailable. Check the device or browser permissions.";
   }
 }
 function thumbs() {
@@ -204,11 +298,9 @@ async function run() {
       cd.style.animation = "none";
       void cd.offsetWidth;
       cd.style.animation = "cdp .9s";
-      beep(660);
       await sleep(900);
     }
     cd.textContent = "";
-    beep(1500, 0.15, 0.1);
     fl.classList.remove("go");
     void fl.offsetWidth;
     fl.classList.add("go");
@@ -224,9 +316,12 @@ async function run() {
   $("#sd").textContent = "ISO 800";
   $(".cam").classList.remove("busy");
   $("#hint").textContent = "Done! Download your strip or start a new session.";
-  await compose();
-  busy = false;
-  $("#shut").disabled = false;
+  try {
+    await compose();
+  } finally {
+    busy = false;
+    $("#shut").disabled = false;
+  }
 }
 async function compose() {
   try {
@@ -325,20 +420,15 @@ async function compose() {
   void o.offsetWidth;
   o.classList.add("go");
 }
-async function save(b, n) {
-  try {
-    const d = window.claude && (await claude.use("downloads"));
-    if (d) {
-      await d.save({ filename: n, data: b });
-      return;
-    }
-  } catch (e) {
-    if (e && e.code === "declined") return;
-  }
+function save(b, n) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(b);
+  const url = URL.createObjectURL(b);
+  a.href = url;
   a.download = n;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $("#dl").onclick = () =>
   $("#out").toBlob(
@@ -355,7 +445,7 @@ $("#again").onclick = () => {
 };
 $("#shut").onclick = run;
 $("#retry").onclick = init;
-$("#tg").onclick = () => {
+const toggleTheme = () => {
   theme = theme === "light" ? "dark" : "light";
   document.documentElement.dataset.theme = theme;
   $("#ttl").textContent = TT[theme];
@@ -365,6 +455,17 @@ $("#tg").onclick = () => {
   document.body.appendChild(px);
   setTimeout(() => px.remove(), 700);
 };
+$("#tg").onclick = toggleTheme;
+$("#tg-mobile").onclick = toggleTheme;
+const mobileMenuToggle = $("#mobile-menu-toggle");
+mobileMenuToggle.onclick = () => {
+  const panel = $("#mobile-menu-panel");
+  const open = panel.hidden;
+  panel.hidden = !open;
+  mobileMenuToggle.setAttribute("aria-expanded", String(open));
+  mobileMenuToggle.setAttribute("aria-label", open ? "Close camera settings" : "Open camera settings");
+  mobileMenuToggle.classList.toggle("on", open);
+};
 document.querySelectorAll("[data-l]").forEach(
   (b) =>
     (b.onclick = () => {
@@ -372,7 +473,7 @@ document.querySelectorAll("[data-l]").forEach(
       layout = b.dataset.l;
       document
         .querySelectorAll("[data-l]")
-        .forEach((x) => x.classList.toggle("on", x === b));
+        .forEach((x) => x.classList.toggle("on", x.dataset.l === layout));
       thumbs();
     }),
 );
@@ -395,37 +496,14 @@ document.querySelectorAll("[data-s]").forEach(
       $("#hint").textContent = {
         sony: "Slim cam · 2004 phone-cam filter",
         canon: "Classic cam · flash digicam filter",
-        wmp: "Player · 2004 webcam filter",
       }[b.dataset.s];
       document
         .querySelectorAll("[data-s]")
-        .forEach((x) => x.classList.toggle("on", x === b));
+        .forEach((x) => x.classList.toggle("on", x.dataset.s === b.dataset.s));
     }),
 );
 const HINT =
   "Ready — press the pink shutter button or hit Space. Shots fire 3 seconds apart.";
-let snd = true,
-  AC;
-const beep = (f, t = 0.08, v = 0.05) => {
-  if (!snd) return;
-  try {
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    const o = AC.createOscillator(),
-      g = AC.createGain();
-    o.type = theme === "light" ? "square" : "sine";
-    o.frequency.value = f;
-    g.gain.value = v;
-    o.connect(g);
-    g.connect(AC.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + t);
-    o.stop(AC.currentTime + t);
-  } catch (e) {}
-};
-$("#snd").onclick = () => {
-  snd = !snd;
-  $("#snd").classList.toggle("off", !snd);
-};
 addEventListener("keydown", (e) => {
   if (
     e.code === "Space" &&

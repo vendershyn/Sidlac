@@ -79,6 +79,42 @@
           </div>
         </div>
         <div class="thumbs" id="th"></div>
+        <div class="mobile-controls" aria-label="Camera actions">
+          <button
+            class="sw"
+            id="tg-mobile"
+            aria-label="Switch between Y2K and vintage mode"
+          >
+            <i class="fa-solid fa-star"></i
+            ><i class="fa-solid fa-moon"></i>
+          </button>
+          <button
+            class="mobile-menu-toggle"
+            id="mobile-menu-toggle"
+            aria-label="Open camera settings"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+          <div class="mobile-menu-panel" id="mobile-menu-panel" hidden>
+            <div class="seg">
+              <button data-l="strip" class="on">
+                <i class="fa-solid fa-film"></i> 3-pic
+              </button>
+              <button data-l="grid">
+                <i class="fa-solid fa-table-cells-large"></i> 2×2
+              </button>
+            </div>
+            <div class="seg skins">
+              <button data-s="sony" class="on">
+                <i class="fa-solid fa-camera"></i> Slim
+              </button>
+              <button data-s="canon">
+                <i class="fa-solid fa-camera-retro"></i> Classic
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="bar">
           <div class="grp">
             <button
@@ -87,10 +123,7 @@
               aria-label="Switch between Y2K and vintage mode"
             >
               <i class="fa-solid fa-star"></i
-              ><i class="fa-solid fa-moon"></i></button
-            ><button class="btn" id="snd" aria-label="Toggle sound">
-              <i class="fa-solid fa-volume-high"></i
-              ><i class="fa-solid fa-volume-xmark"></i>
+              ><i class="fa-solid fa-moon"></i>
             </button>
           </div>
           <div class="seg">
@@ -104,9 +137,7 @@
             <button data-s="sony" class="on">
               <i class="fa-solid fa-camera"></i> Slim cam</button
             ><button data-s="canon">
-              <i class="fa-solid fa-camera-retro"></i> Classic cam</button
-            ><button data-s="wmp">
-              <i class="fa-solid fa-circle-play"></i> Player
+              <i class="fa-solid fa-camera-retro"></i> Classic cam
             </button>
           </div>
         </div>
@@ -114,13 +145,7 @@
 
       <section class="res" id="res" hidden>
         <div class="slot">Sidlac Photo Booth</div>
-        <div class="wmp">
-          <div class="eject"><canvas id="out"></canvas></div>
-          <div class="wmpbar">
-            <i class="fa-solid fa-play"></i><i class="fa-solid fa-stop"></i
-            ><span class="pg"></span><i class="fa-solid fa-volume-high"></i>
-          </div>
-        </div>
+        <div class="eject"><canvas id="out"></canvas></div>
         <div class="seg palette" role="group" aria-label="Photocard color">
           <span class="palette-label" aria-hidden="true">Card color</span>
           <button

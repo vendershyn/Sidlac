@@ -123,6 +123,9 @@ button {
   justify-content: space-between;
   padding: 12px 14px;
 }
+.mobile-controls {
+  display: none;
+}
 .seg {
   display: flex;
   gap: 6px;
@@ -352,6 +355,9 @@ button {
   inset: 0;
   display: grid;
   place-items: center;
+  transform: rotate(var(--timer-rotation, 0deg));
+  transform-origin: center;
+  transition: transform 300ms ease;
   font:
     110px VT323,
     monospace;
@@ -531,19 +537,6 @@ button {
 [data-theme="dark"] .slot {
   display: flex;
 }
-.wmp {
-  display: inline-block;
-  max-width: 100%;
-  padding: 10px 10px 0;
-  border-radius: 14px 14px 24px 24px;
-  background: linear-gradient(135deg, #7a9bea, #4268cc);
-  box-shadow: 0 6px 16px #0a2a7a55;
-}
-[data-theme="dark"] .wmp {
-  background: none;
-  padding: 0;
-  box-shadow: none;
-}
 .eject {
   overflow: hidden;
   display: block;
@@ -571,22 +564,6 @@ button {
   from {
     transform: translateY(-100%);
   }
-}
-.wmpbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 6px;
-  color: #fff;
-}
-.wmpbar .pg {
-  flex: 1;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #6fe05a 100%, #fff6 0);
-}
-[data-theme="dark"] .wmpbar {
-  display: none;
 }
 .acts {
   display: flex;
@@ -634,14 +611,6 @@ button:focus-visible {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-#snd {
-  padding: 0 12px;
-  height: 36px;
-}
-#snd.off .fa-volume-high,
-#snd:not(.off) .fa-volume-xmark {
-  display: none;
 }
 [data-theme="light"] body::after {
   content: "";
@@ -979,7 +948,8 @@ html[data-skin="sony"] {
   --img: url(img/slim-cam.webp);
   --ar: 735/418;
   --portrait-ar: 418/735;
-  --mw: 760px;
+  --portrait-scale: 1.758;
+  --mw: 820px;
   --lx: 11.02%;
   --ly: 13.64%;
   --lw: 57.55%;
@@ -992,7 +962,8 @@ html[data-skin="canon"] {
   --img: url(img/classic-cam.webp);
   --ar: 735/490;
   --portrait-ar: 490/735;
-  --mw: 760px;
+  --portrait-scale: 1.5;
+  --mw: 820px;
   --lx: 14.01%;
   --ly: 36.53%;
   --lw: 40.54%;
@@ -1001,24 +972,7 @@ html[data-skin="canon"] {
   --sy: 60.82%;
   --ss: 6.8%;
 }
-html[data-skin="wmp"] {
-  --img: url(img/player.webp);
-  --ar: 400/386;
-  --portrait-ar: 386/400;
-  --mw: 460px;
-  --lx: 8%;
-  --ly: 9.59%;
-  --lw: 86.75%;
-  --lh: 71.24%;
-  --sx: 12.5%;
-  --sy: 91.71%;
-  --ss: 8.5%;
-}
-[data-skin="wmp"] .lcd::after {
-  display: none;
-}
-[data-skin="canon"] #live,
-[data-skin="wmp"] #live {
+[data-skin="canon"] #live {
   image-rendering: auto;
 }
 .hs {
@@ -1090,7 +1044,7 @@ html[data-skin="wmp"] {
 [data-theme="dark"] .fr {
   opacity: 0.35;
 }
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
   .hs {
     font-size: 10px !important;
     width: 14px !important;
@@ -1341,7 +1295,7 @@ html[data-skin="wmp"] {
 [data-theme="dark"] .skins {
   display: none;
 }
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
   body {
     padding: 12px 8px 20px;
   }
@@ -1349,16 +1303,77 @@ html[data-skin="wmp"] {
     width: 100%;
     border-radius: 8px 8px 4px 4px;
   }
+  #camView {
+    position: relative;
+  }
   .bar {
-    gap: 8px;
-    padding: 10px 8px;
+    display: none;
   }
-  .bar > .grp {
-    flex: 1 0 100%;
-    justify-content: center;
+  .mobile-controls {
+    position: absolute;
+    right: 12px;
+    bottom: 18px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
   }
-  .bar > .seg {
-    justify-content: center;
+  .mobile-controls > .sw {
+    width: 56px;
+    height: 32px;
+  }
+  [data-theme="dark"] .mobile-controls > .sw::after {
+    transform: translateX(23px);
+  }
+  .mobile-menu-toggle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: grid;
+    place-items: center;
+    color: #5a0a3c;
+    background: radial-gradient(circle at 35% 30%, #fff, #ffb4e1 55%, #e55ab0);
+    box-shadow:
+      0 0 0 2px #99a,
+      0 4px 10px #0005;
+  }
+  [data-theme="dark"] .mobile-menu-toggle {
+    color: #0a0909;
+    border-color: #e8e1d2;
+    background: #e8e1d2;
+  }
+  .mobile-menu-toggle.on {
+    transform: rotate(90deg);
+  }
+  .mobile-menu-panel {
+    position: absolute;
+    right: 66px;
+    bottom: 0;
+    width: min(280px, calc(100vw - 110px));
+    padding: 8px;
+    border: 2px solid #6f8fd8;
+    border-radius: 16px;
+    display: grid;
+    gap: 6px;
+    background: #dfe8fbf2;
+    box-shadow: 0 8px 24px #0a2a7a55;
+  }
+  .mobile-menu-panel[hidden] {
+    display: none;
+  }
+  [data-theme="dark"] .mobile-menu-panel {
+    border-color: #d8d2c4;
+    border-radius: 0;
+    background: #000f;
+  }
+  .mobile-menu-panel .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .mobile-menu-panel .skins {
+    grid-template-columns: 1fr 1fr;
   }
   .seg button,
   .btn {
@@ -1407,7 +1422,7 @@ html[data-skin="wmp"] {
     padding-inline: 4px;
   }
 }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (min-width: 641px) and (hover: hover) and (orientation: landscape) and (max-height: 520px) {
   body {
     padding-top: 6px;
     padding-bottom: 8px;
@@ -1475,9 +1490,6 @@ html[data-skin="wmp"] {
   [data-theme="light"][data-skin="canon"] .cam {
     width: min(calc(100% - 12px), 65svh);
   }
-  [data-theme="light"][data-skin="wmp"] .cam {
-    width: min(calc(100% - 12px), 44svh);
-  }
   [data-theme="dark"] .cam {
     grid-template-columns: minmax(0, 1fr) 88px !important;
     gap: 8px;
@@ -1510,20 +1522,27 @@ html[data-skin="wmp"] {
     max-height: 56svh;
   }
 }
-@media (max-width: 640px) and (orientation: portrait) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
+  :root {
+    --portrait-width: min(100vw, 100svh);
+    --portrait-height: max(100vw, 100svh);
+  }
   .lcd {
     container-type: size;
   }
   [data-theme="dark"] .lcd {
     width: auto;
-    height: min(145px, max(80px, calc(100svh - 520px)));
+    height: min(145px, max(80px, calc(var(--portrait-height) - 520px)));
     aspect-ratio: 4/3;
   }
   .cam-stage {
     display: grid;
     position: relative;
     place-items: center;
-    --cam-long-edge: min(calc(100vw - 28px), max(180px, calc(100svh - 360px)));
+    --cam-long-edge: min(
+      calc((var(--portrait-width) - 28px) * var(--portrait-scale)),
+      max(180px, calc(var(--portrait-height) - 280px))
+    );
     height: var(--cam-long-edge);
     aspect-ratio: var(--portrait-ar);
     margin: 6px auto 10px;
@@ -1539,6 +1558,7 @@ html[data-skin="wmp"] {
   }
   [data-theme="dark"] .cam-stage {
     aspect-ratio: 418/735;
+    --portrait-scale: 1.758;
   }
   [data-theme="dark"] .cam {
     position: absolute;
@@ -1561,7 +1581,7 @@ html[data-skin="wmp"] {
   }
   [data-theme="dark"] .lcd canvas {
     width: auto;
-    height: min(145px, calc(100svh - 520px));
+    height: min(145px, calc(var(--portrait-height) - 520px));
     max-width: 100%;
   }
   [data-theme] .lcd canvas {
@@ -1638,7 +1658,7 @@ html[data-skin="wmp"] {
 [data-theme="dark"] .palette .color-option.on {
   border-color: #e8e1d2;
 }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (min-width: 641px) and (hover: hover) and (orientation: landscape) and (max-height: 520px) {
   .palette .color-option {
     flex-basis: 36px;
     width: 36px;
