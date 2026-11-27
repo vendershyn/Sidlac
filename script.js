@@ -13,7 +13,8 @@ vid.playsInline = true;
 vid.muted = true;
 const live = $("#live"),
   SZ = { light: [256, 192], dark: [480, 360] },
-  SZL = { sony: [256, 192], canon: [320, 240], wmp: [160, 120] },
+  SZL = { sony: [256, 192], canon: [320, 240] },
+  mobile = matchMedia("(max-width: 640px)"),
   portrait = matchMedia("(max-width: 640px) and (orientation: portrait)");
 const TT = {
   light: "Sidlac — Y2K Cam.exe",
@@ -45,7 +46,7 @@ function render(cv) {
   const c = cv.getContext("2d", { willReadFrequently: true }),
     vw = vid.videoWidth,
     vh = vid.videoHeight;
-  const rotate = portraitMode && vw > vh,
+  const rotate = portraitMode ? vw > vh : !mobile.matches && vh > vw,
     sourceWidth = rotate ? vh : vw,
     sourceHeight = rotate ? vw : vh;
   let cropWidth = sourceWidth,
@@ -63,8 +64,13 @@ function render(cv) {
   c.translate(w, 0);
   c.scale(-1, 1);
   if (rotate) {
-    c.translate(w, 0);
-    c.rotate(Math.PI / 2);
+    if (portraitMode) {
+      c.translate(w, 0);
+      c.rotate(Math.PI / 2);
+    } else {
+      c.translate(0, h);
+      c.rotate(-Math.PI / 2);
+    }
     c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, h, w);
   } else {
     c.drawImage(vid, sx, sy, sourceCropWidth, sourceCropHeight, 0, 0, w, h);
@@ -84,10 +90,6 @@ function render(cv) {
         d[i] = (l + (r - l) * 1.25 - 128) * 1.3 + 156 + n / 3;
         d[i + 1] = (l + (g - l) * 1.25 - 128) * 1.3 + 150 + n / 3;
         d[i + 2] = (l + (b - l) * 1.25 - 128) * 1.3 + 160 + n / 3;
-      } else if (sk === "wmp") {
-        d[i] = (l + (r - l) * 0.55 - 128) * 0.85 + 128 + n * 0.8;
-        d[i + 1] = (l + (g - l) * 0.55 - 128) * 0.85 + 144 + n * 0.8;
-        d[i + 2] = (l + (b - l) * 0.55 - 128) * 0.85 + 140 + n * 0.8;
       } else {
         d[i] = q((l + (r - l) * 1.5 - 128) * 1.15 + 140 + n);
         d[i + 1] = q((l + (g - l) * 1.5 - 128) * 1.15 + 136 + n);
@@ -204,11 +206,9 @@ async function run() {
       cd.style.animation = "none";
       void cd.offsetWidth;
       cd.style.animation = "cdp .9s";
-      beep(660);
       await sleep(900);
     }
     cd.textContent = "";
-    beep(1500, 0.15, 0.1);
     fl.classList.remove("go");
     void fl.offsetWidth;
     fl.classList.add("go");
@@ -355,7 +355,7 @@ $("#again").onclick = () => {
 };
 $("#shut").onclick = run;
 $("#retry").onclick = init;
-$("#tg").onclick = () => {
+const toggleTheme = () => {
   theme = theme === "light" ? "dark" : "light";
   document.documentElement.dataset.theme = theme;
   $("#ttl").textContent = TT[theme];
@@ -365,6 +365,17 @@ $("#tg").onclick = () => {
   document.body.appendChild(px);
   setTimeout(() => px.remove(), 700);
 };
+$("#tg").onclick = toggleTheme;
+$("#tg-mobile").onclick = toggleTheme;
+const mobileMenuToggle = $("#mobile-menu-toggle");
+mobileMenuToggle.onclick = () => {
+  const panel = $("#mobile-menu-panel");
+  const open = panel.hidden;
+  panel.hidden = !open;
+  mobileMenuToggle.setAttribute("aria-expanded", String(open));
+  mobileMenuToggle.setAttribute("aria-label", open ? "Close camera settings" : "Open camera settings");
+  mobileMenuToggle.classList.toggle("on", open);
+};
 document.querySelectorAll("[data-l]").forEach(
   (b) =>
     (b.onclick = () => {
@@ -372,7 +383,7 @@ document.querySelectorAll("[data-l]").forEach(
       layout = b.dataset.l;
       document
         .querySelectorAll("[data-l]")
-        .forEach((x) => x.classList.toggle("on", x === b));
+        .forEach((x) => x.classList.toggle("on", x.dataset.l === layout));
       thumbs();
     }),
 );
@@ -395,37 +406,14 @@ document.querySelectorAll("[data-s]").forEach(
       $("#hint").textContent = {
         sony: "Slim cam · 2004 phone-cam filter",
         canon: "Classic cam · flash digicam filter",
-        wmp: "Player · 2004 webcam filter",
       }[b.dataset.s];
       document
         .querySelectorAll("[data-s]")
-        .forEach((x) => x.classList.toggle("on", x === b));
+        .forEach((x) => x.classList.toggle("on", x.dataset.s === b.dataset.s));
     }),
 );
 const HINT =
   "Ready — press the pink shutter button or hit Space. Shots fire 3 seconds apart.";
-let snd = true,
-  AC;
-const beep = (f, t = 0.08, v = 0.05) => {
-  if (!snd) return;
-  try {
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    const o = AC.createOscillator(),
-      g = AC.createGain();
-    o.type = theme === "light" ? "square" : "sine";
-    o.frequency.value = f;
-    g.gain.value = v;
-    o.connect(g);
-    g.connect(AC.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + t);
-    o.stop(AC.currentTime + t);
-  } catch (e) {}
-};
-$("#snd").onclick = () => {
-  snd = !snd;
-  $("#snd").classList.toggle("off", !snd);
-};
 addEventListener("keydown", (e) => {
   if (
     e.code === "Space" &&
