@@ -355,6 +355,9 @@ button {
   inset: 0;
   display: grid;
   place-items: center;
+  transform: rotate(var(--timer-rotation, 0deg));
+  transform-origin: center;
+  transition: transform 300ms ease;
   font:
     110px VT323,
     monospace;
@@ -1041,7 +1044,7 @@ html[data-skin="canon"] {
 [data-theme="dark"] .fr {
   opacity: 0.35;
 }
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
   .hs {
     font-size: 10px !important;
     width: 14px !important;
@@ -1292,7 +1295,7 @@ html[data-skin="canon"] {
 [data-theme="dark"] .skins {
   display: none;
 }
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
   body {
     padding: 12px 8px 20px;
   }
@@ -1419,7 +1422,7 @@ html[data-skin="canon"] {
     padding-inline: 4px;
   }
 }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (min-width: 641px) and (hover: hover) and (orientation: landscape) and (max-height: 520px) {
   body {
     padding-top: 6px;
     padding-bottom: 8px;
@@ -1519,13 +1522,17 @@ html[data-skin="canon"] {
     max-height: 56svh;
   }
 }
-@media (max-width: 640px) and (orientation: portrait) {
+@media (max-width: 640px), (max-height: 640px) and (pointer: coarse) {
+  :root {
+    --portrait-width: min(100vw, 100svh);
+    --portrait-height: max(100vw, 100svh);
+  }
   .lcd {
     container-type: size;
   }
   [data-theme="dark"] .lcd {
     width: auto;
-    height: min(145px, max(80px, calc(100svh - 520px)));
+    height: min(145px, max(80px, calc(var(--portrait-height) - 520px)));
     aspect-ratio: 4/3;
   }
   .cam-stage {
@@ -1533,8 +1540,8 @@ html[data-skin="canon"] {
     position: relative;
     place-items: center;
     --cam-long-edge: min(
-      calc((100vw - 28px) * var(--portrait-scale)),
-      max(180px, calc(100svh - 280px))
+      calc((var(--portrait-width) - 28px) * var(--portrait-scale)),
+      max(180px, calc(var(--portrait-height) - 280px))
     );
     height: var(--cam-long-edge);
     aspect-ratio: var(--portrait-ar);
@@ -1574,7 +1581,7 @@ html[data-skin="canon"] {
   }
   [data-theme="dark"] .lcd canvas {
     width: auto;
-    height: min(145px, calc(100svh - 520px));
+    height: min(145px, calc(var(--portrait-height) - 520px));
     max-width: 100%;
   }
   [data-theme] .lcd canvas {
@@ -1651,7 +1658,7 @@ html[data-skin="canon"] {
 [data-theme="dark"] .palette .color-option.on {
   border-color: #e8e1d2;
 }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (min-width: 641px) and (hover: hover) and (orientation: landscape) and (max-height: 520px) {
   .palette .color-option {
     flex-basis: 36px;
     width: 36px;

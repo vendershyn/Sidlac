@@ -8,14 +8,15 @@ let theme = "light",
   ready = false,
   shots = [],
   tick = 0;
+const timer = $("#cd");
 const vid = document.createElement("video");
 vid.playsInline = true;
 vid.muted = true;
 const live = $("#live"),
   SZ = { light: [256, 192], dark: [480, 360] },
   SZL = { sony: [256, 192], canon: [320, 240] },
-  mobile = matchMedia("(max-width: 640px)"),
-  portrait = matchMedia("(max-width: 640px) and (orientation: portrait)");
+  mobile = matchMedia("(max-width: 640px), (max-height: 640px) and (pointer: coarse)"),
+  portrait = mobile;
 const TT = {
   light: "Sidlac — Y2K Cam.exe",
   dark: "Sidlac · Est. 1926",
@@ -32,6 +33,82 @@ const dstr = () => {
   const t = new Date();
   return p2(t.getMonth() + 1) + "." + p2(t.getDate()) + "." + t.getFullYear();
 };
+
+let sensorActive = false,
+  sensorPermissionRequested = false;
+function setTimerRotation(degrees) {
+  timer.style.setProperty("--timer-rotation", degrees + "deg");
+}
+function updateTimerFromScreen() {
+  if (!mobile.matches) {
+    setTimerRotation(0);
+    return;
+  }
+  if (sensorActive) return;
+  const angle =
+    screen.orientation && typeof screen.orientation.angle === "number"
+      ? screen.orientation.angle
+      : typeof window.orientation === "number"
+        ? window.orientation
+        : 0;
+  setTimerRotation(
+    angle === 90 || angle === -270
+      ? 90
+      : angle === 270 || angle === -90
+        ? -90
+        : 0,
+  );
+}
+function handleDeviceOrientation(event) {
+  if (!mobile.matches) {
+    setTimerRotation(0);
+    return;
+  }
+  const beta = event.beta,
+    gamma = event.gamma;
+  if (typeof beta !== "number" || typeof gamma !== "number") return;
+  if (Math.max(Math.abs(beta), Math.abs(gamma)) < 20) return;
+  sensorActive = true;
+  setTimerRotation(
+    Math.abs(gamma) > Math.abs(beta) && Math.abs(gamma) > 35
+      ? gamma > 0
+        ? 90
+        : -90
+      : 0,
+  );
+}
+function enableDeviceOrientation() {
+  if (
+    sensorPermissionRequested ||
+    !mobile.matches ||
+    !("DeviceOrientationEvent" in window)
+  )
+    return;
+  sensorPermissionRequested = true;
+  const requestPermission = DeviceOrientationEvent.requestPermission;
+  if (typeof requestPermission === "function") {
+    requestPermission
+      .call(DeviceOrientationEvent)
+      .then((permission) => {
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleDeviceOrientation);
+        } else {
+          updateTimerFromScreen();
+        }
+      })
+      .catch(updateTimerFromScreen);
+  } else {
+    window.addEventListener("deviceorientation", handleDeviceOrientation);
+  }
+}
+timer.style.setProperty("--timer-rotation", "0deg");
+if ("DeviceOrientationEvent" in window && !DeviceOrientationEvent.requestPermission) {
+  window.addEventListener("deviceorientation", handleDeviceOrientation);
+}
+updateTimerFromScreen();
+screen.orientation?.addEventListener("change", updateTimerFromScreen);
+window.addEventListener("orientationchange", updateTimerFromScreen);
+window.addEventListener("pointerdown", enableDeviceOrientation, { once: true });
 
 function render(cv) {
   const portraitMode = portrait.matches,
