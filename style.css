@@ -1530,6 +1530,19 @@ html[data-skin="canon"] {
   .lcd {
     container-type: size;
   }
+  .cd {
+    transform: rotate(-90deg);
+  }
+  @keyframes cdp {
+    from {
+      transform: rotate(-90deg) scale(1.6);
+      opacity: 0;
+    }
+    to {
+      transform: rotate(-90deg) scale(1);
+      opacity: 1;
+    }
+  }
   [data-theme="dark"] .lcd {
     width: auto;
     height: min(145px, max(80px, calc(var(--portrait-height) - 520px)));
