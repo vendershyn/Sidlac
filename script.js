@@ -12,6 +12,7 @@ const timer = $("#cd");
 const vid = document.createElement("video");
 vid.playsInline = true;
 vid.muted = true;
+let cameraStream = null;
 const live = $("#live"),
   SZ = { light: [256, 192], dark: [480, 360] },
   SZL = { sony: [256, 192], canon: [320, 240] },
@@ -106,7 +107,7 @@ if ("DeviceOrientationEvent" in window && !DeviceOrientationEvent.requestPermiss
   window.addEventListener("deviceorientation", handleDeviceOrientation);
 }
 updateTimerFromScreen();
-screen.orientation?.addEventListener("change", updateTimerFromScreen);
+screen.orientation?.addEventListener?.("change", updateTimerFromScreen);
 window.addEventListener("orientationchange", updateTimerFromScreen);
 window.addEventListener("pointerdown", enableDeviceOrientation, { once: true });
 
@@ -242,6 +243,9 @@ function loop(ts) {
 }
 async function init() {
   try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Camera API unavailable");
+    }
     const s = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
@@ -250,13 +254,24 @@ async function init() {
       },
       audio: false,
     });
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    cameraStream = s;
     vid.srcObject = s;
     await vid.play();
     ready = true;
     $("#err").hidden = true;
     $("#shut").disabled = false;
+    $("#hint").textContent = HINT;
   } catch (e) {
+    ready = false;
+    $("#shut").disabled = true;
     $("#err").hidden = false;
+    $("#hint").textContent =
+      e && e.name === "NotAllowedError"
+        ? "Camera access was denied. Allow it, then choose Retry."
+        : "Camera unavailable. Check the device or browser permissions.";
   }
 }
 function thumbs() {
@@ -301,9 +316,12 @@ async function run() {
   $("#sd").textContent = "ISO 800";
   $(".cam").classList.remove("busy");
   $("#hint").textContent = "Done! Download your strip or start a new session.";
-  await compose();
-  busy = false;
-  $("#shut").disabled = false;
+  try {
+    await compose();
+  } finally {
+    busy = false;
+    $("#shut").disabled = false;
+  }
 }
 async function compose() {
   try {
@@ -402,20 +420,15 @@ async function compose() {
   void o.offsetWidth;
   o.classList.add("go");
 }
-async function save(b, n) {
-  try {
-    const d = window.claude && (await claude.use("downloads"));
-    if (d) {
-      await d.save({ filename: n, data: b });
-      return;
-    }
-  } catch (e) {
-    if (e && e.code === "declined") return;
-  }
+function save(b, n) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(b);
+  const url = URL.createObjectURL(b);
+  a.href = url;
   a.download = n;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $("#dl").onclick = () =>
   $("#out").toBlob(
