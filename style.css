@@ -341,10 +341,6 @@ button {
 [data-theme="dark"] .osd.d {
   display: flex;
 }
-.rec {
-  color: #e5322d;
-  animation: bl 1.2s steps(2) infinite;
-}
 @keyframes bl {
   50% {
     opacity: 0;
@@ -366,6 +362,9 @@ button {
     3px 3px #ff3fa4,
     -2px -2px #3f7bff;
   pointer-events: none;
+}
+.cd[hidden] {
+  display: none;
 }
 [data-theme="dark"] .cd {
   font:
@@ -786,11 +785,11 @@ button:focus-visible {
 }
 @keyframes cdp {
   from {
-    transform: scale(1.6);
+    scale: 1.6;
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    scale: 1;
     opacity: 1;
   }
 }

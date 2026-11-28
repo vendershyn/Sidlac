@@ -265,6 +265,7 @@ async function run() {
     $("#hint").textContent =
       "Shot " + (i + 1) + " of " + n + " — look at the lens!";
     for (let k = 3; k > 0; k--) {
+      cd.hidden = false;
       cd.textContent = k;
       cd.style.animation = "none";
       void cd.offsetWidth;
@@ -272,6 +273,7 @@ async function run() {
       await sleep(900);
     }
     cd.textContent = "";
+    cd.hidden = true;
     fl.classList.remove("go");
     void fl.offsetWidth;
     fl.classList.add("go");
